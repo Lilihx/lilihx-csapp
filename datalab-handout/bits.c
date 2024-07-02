@@ -272,6 +272,11 @@ int logicalNeg(int x) {
  *  Rating: 4
  */
 int howManyBits(int x) {
+  // 移位异或后，只需要判断从左往右第一个1的位置。
+  // x 每右移1位，不是0 就 + 1，是0就+0；
+  int xx = x ^ (x << 1);
+  int res = 1 + !(x << 1) + !(x << 2) +  
+  int res2 = x ^ (x >> 1) 
   return 0;
 }
 //float
@@ -287,7 +292,29 @@ int howManyBits(int x) {
  *   Rating: 4
  */
 unsigned floatScale2(unsigned uf) {
-  return 2;
+  /**
+   * 1 + 8 + 23
+   * 截取指数域 + 1
+   * 根据 exponent & fraction 判断浮点数的合法性
+   * */
+  // 判断 fraction 是不是全0
+  unsigned all1 = ~0;
+  unsigned fraction =  (~(all1 << 23)) & uf;
+  unsigned exponent = (~(all1 << 8)) & (uf >> 23);
+  unsigned sign = uf >> 31 & 1;
+  
+  if (exponent == 0 ) {
+    if (fraction == 0 ){
+      return uf;
+    } 
+    // 移动fraction
+    return (fraction << 1) + (exponent << 23) + (sign << 31);
+  }
+  if (exponent == 0xff) {
+    return uf;
+  }
+  // 指数域 + 1
+  return fraction + ((exponent + 1)  << 23) + (sign << 31);
 }
 /* 
  * floatFloat2Int - Return bit-level equivalent of expression (int) f
@@ -302,7 +329,27 @@ unsigned floatScale2(unsigned uf) {
  *   Rating: 4
  */
 int floatFloat2Int(unsigned uf) {
-  return 2;
+  int all1 = ~0;
+  int fraction =  (~(all1 << 23)) & uf;
+  int exponentRaw = (~(all1 << 8)) & (uf >> 23);
+  int exponent = exponentRaw - 127;
+  if (exponent < 0) {
+    return 0;
+  }
+  if (exponent > 31) {
+    return 0x80000000;
+  }
+  // 把fraction左移并累加到res上
+  int fractionReal = fraction + (1 << 23);
+  int res = 0;
+  int i;
+  for (i = 0; i <= exponent; i ++) {
+    res = (res << 1) + (fractionReal >> (23 - i));
+  }
+  if (!(uf >> 31)) {
+    return  res;
+  } 
+  return -1 * res;
 }
 /* 
  * floatPower2 - Return bit-level equivalent of the expression 2.0^x
@@ -318,5 +365,13 @@ int floatFloat2Int(unsigned uf) {
  *   Rating: 4
  */
 unsigned floatPower2(int x) {
-    return 2;
+  if (x <= -126) {
+    return 0;
+  }
+  if (x > 127) {
+    return 0x7f800000;
+  }
+  int exponent = x + 127;
+  
+  return (exponent << 23);
 }
