@@ -272,12 +272,40 @@ int logicalNeg(int x) {
  *  Rating: 4
  */
 int howManyBits(int x) {
-  // 移位异或后，只需要判断从左往右第一个1的位置。
-  // x 每右移1位，不是0 就 + 1，是0就+0；
-  int xx = x ^ (x << 1);
-  int res = 1 + !(x << 1) + !(x << 2) +  
-  int res2 = x ^ (x >> 1) 
-  return 0;
+  int res = 1; 
+  int y = (x ^ (x >> 1)) << 1;
+
+  // 右移动16位判断
+  int tmpY = y;
+  y = y >> 16;
+  int yZero = !(!y);
+  res = res + (yZero << 4);
+  y = ((~yZero + 1) & y ) | ( (~(~yZero + 1)) & tmpY);
+  
+  tmpY = y;
+  y = y >> 8;
+  yZero = !(!y);
+  res = res + (yZero << 3);
+  y = ((~yZero + 1) & y ) | ( (~(~yZero + 1)) & tmpY);
+  
+
+  tmpY = y;
+  y = y >> 4;
+  yZero = !(!y);
+  res = res + (yZero << 2);
+  y = ((~yZero + 1) & y ) | ( (~(~yZero + 1)) & tmpY);
+  
+  tmpY = y;
+  y = y >> 2;
+  yZero = !(!y);
+  res = res + (yZero << 1);
+  y = ((~yZero + 1) & y ) | ( (~(~yZero + 1)) & tmpY);
+   
+  y = y >> 1;
+  yZero = !(!y);
+  res = res + yZero;
+
+  return res;
 }
 //float
 /* 
